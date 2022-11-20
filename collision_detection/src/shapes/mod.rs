@@ -6,7 +6,7 @@ mod collision_shape;
 
 pub use collision_shape::*;
 pub use crate::math_util::*;
-pub use super::contact::*;
+pub use super::info::*;
 pub use crate::geometry::*;
 pub use convex_poly::*;
 pub use line_segment::*;

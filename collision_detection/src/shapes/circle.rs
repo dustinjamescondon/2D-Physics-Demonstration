@@ -1,7 +1,7 @@
 use crate::math_util::*;
 use super::collision_shape::*;
 use super::shape::*;
-use crate::contact::*;
+use crate::info::*;
 use super::line_segment::*;
 use super::convex_poly::*;
 

@@ -11,12 +11,12 @@
 //! collision normal will always point towards the first (or self)
 //! object used in the test.
 
-pub mod contact;
+mod info;
 pub mod shapes;
 pub mod aabb;
 extern crate math_util;
 pub use shapes::*;
-pub use contact::*;
+pub use info::*;
 pub use aabb::*;
 mod collision_tests;
 

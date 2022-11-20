@@ -29,7 +29,7 @@ impl LineSegment {
 	    length: (point2 - point1).norm(),
 	}
     }
-
+   
     pub fn midpoint(&self) -> Vector2f {
 	(self.point1() + self.point2()) / 2.0
     }
@@ -100,8 +100,8 @@ impl Shape for LineSegment {
 	flip_contact_normal(circle.test_against_line(self))
     }
 
-    fn test_against_line(&self, line: &LineSegment) -> Option<Contact> {
-	panic!("Line test against line not implemented!");
+    fn test_against_line(&self, _line: &LineSegment) -> Option<Contact> {
+	panic!("Line test against line not implemented yet!");
 
 	/*let clipped_line = line.as_edge().clip(&self.point1(), &-self.direction)
 	    .and_then(|edge| edge.clip(&self.point2(), &self.direction))?;
@@ -136,12 +136,12 @@ impl Shape for LineSegment {
 	//--------------------------------------------------
 	// Then get min penetration using poly's axis
 	//..................................................
-	let (poly_pen_depth, poly_pen_edge) = p.calc_min_depth_line(self, line_pen_depth);
+	let poly_axis_info = p.calc_min_depth_line(self, line_pen_depth);
 
 
-	// TODO If we have the calc_min_depth return negative values instead of Options,
-	// then we can just check this
-	if line_pen_depth < 0.0 || poly_pen_depth < 0.0 {
+	// If either projection isn't penetrating, then the objects
+	// aren't penetrating, by the seperating axis theorem.
+	if line_pen_depth < 0.0 || poly_axis_info.depth < 0.0 {
 	    return None;
 	}
 
@@ -153,13 +153,13 @@ impl Shape for LineSegment {
 	// If the line has less penetration, then make it the reference face, and
 	// since it's the "self" object, and the line normal is away from self, then
 	// flip the sign of the normal
-	if line_pen_depth < poly_pen_depth {
+	if line_pen_depth < poly_axis_info.depth {
 	    reference_face = &line_pen_edge;
-	    incident_face = &poly_pen_edge; // I'm assuming the incident face is this one
+	    incident_face = &poly_axis_info.edge; // I'm assuming the incident face is this one
 	    sign = -1.0;
 	}
 	else {
-	    reference_face = &poly_pen_edge;
+	    reference_face = &poly_axis_info.edge;
 	    incident_face = &line_pen_edge; // Otherwise I'm assuming the incident face is this one
 	    sign = 1.0;
 	}

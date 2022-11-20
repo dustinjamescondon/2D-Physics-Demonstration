@@ -1,6 +1,5 @@
 use super::*;
-pub use crate::contact::*;
-use crate::geometry::*;
+pub use crate::info::*;
 
 #[derive(Clone, Debug)]
 pub struct ConvexPoly{
@@ -73,6 +72,8 @@ impl ConvexPoly {
 	}).collect()
     }
 
+    /// Returns the edge whose normal is opposing the reference face's
+    /// normal most directly
     pub fn find_incident_face(&self, reference_face: &Edge) -> Edge {
 	let mut max_opposition: f32 = 0.0;
 	let mut incident_face: Option<Edge> = None;
@@ -87,9 +88,9 @@ impl ConvexPoly {
 	incident_face.unwrap()
     }
 
-    // Calculates the minimum penetration depth between the two polygons using the edges from
-    // this/self polygon as the seperating axes
-    pub fn calc_min_depth_wrt_own_axes(&self, b: &impl Shape) -> (f32, Edge) {
+    /// Calculates the minimum penetration depth between the two polygons using the edges from
+    /// this/self polygon as the seperating axes
+    pub fn calc_min_depth_wrt_own_axes(&self, b: &impl Shape) -> PenetrationInfo {
 	//------------------------------------------
 	// First find the axis of minimum penetration
 	//..........................................
@@ -115,12 +116,15 @@ impl ConvexPoly {
 	}
 
 	assert!(min_edge.is_some());
-	(min_penetration.unwrap(), min_edge.unwrap())
+	PenetrationInfo::new(min_penetration.unwrap(), &min_edge.unwrap())
     }
 
 
     // TODO clean this up
-    pub fn calc_min_depth_line(&self, line: &LineSegment, line_axis_overlap: f32) -> (f32, Edge) {
+    /// Returns the minimum projection penetration between all edges
+    /// in this convex polygon and the edge containing the axis it was
+    /// determined with.
+    pub fn calc_min_depth_line(&self, line: &LineSegment, line_axis_overlap: f32) -> PenetrationInfo {
 	let position_difference = line.pos() - self.pos();
 	let mut min_penetration: Option<f32> = None;
 	let mut min_edge: Option<Edge> = None;
@@ -159,7 +163,7 @@ impl ConvexPoly {
 	}
 
 	assert!(min_penetration.is_some());
-	(min_penetration.unwrap(), min_edge.unwrap())
+	PenetrationInfo::new(min_penetration.unwrap(), &min_edge.unwrap())
     }
 }
 
@@ -216,16 +220,18 @@ impl Shape for ConvexPoly {
 	/*..................................................
 	 * Self first
 	..................................................*/
-	let (a_depth, a_edge) = self.calc_min_depth_wrt_own_axes(p);
+	let a_pen_info = self.calc_min_depth_wrt_own_axes(p);
 	/*..................................................
 	 * Other poly next
 	..................................................*/
-	let (b_depth, b_edge) = p.calc_min_depth_wrt_own_axes(self);
+	let b_pen_info = p.calc_min_depth_wrt_own_axes(self);
 	/*..................................................
 	 * Now see which result contains the reference face (axis of min penetration depth)
 	..................................................*/
 
-	if a_depth < 0.0 || b_depth < 0.0 {
+
+	// If either 
+	if a_pen_info.depth < 0.0 || b_pen_info.depth < 0.0 {
 	    return None;
 	}
 
@@ -237,12 +243,12 @@ impl Shape for ConvexPoly {
 
 	let sign: f32;
 
-	if a_depth < b_depth {
-	    reference_face = a_edge;
+	if a_pen_info.depth < b_pen_info.depth {
+	    reference_face = a_pen_info.edge;
 	    incident_face = p.find_incident_face(&reference_face);
 	    sign = 1.0;
 	} else {
-	    reference_face = b_edge;
+	    reference_face = b_pen_info.edge;
 	    incident_face = self.find_incident_face(&reference_face);
 
 	    // since we want the normal to be away from "this" object, we will eventually need

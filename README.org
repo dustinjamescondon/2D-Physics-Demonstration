@@ -1,0 +1,28 @@
+#+TITLE: Collision detection and physics system demonstration
+#+AUTHOR: Dustin Condon
+#+DATE: 20 Nov 2022
+
+* Introduction
+- Some structure based on Erin Catto's [[https://box2d.org/][Box2D]]
+  - How friction is calculated
+  - The structure and language of a collision "fixture"
+  - Constraint-based collision resolution
+    
+- What mine doesn't have:
+  - No "warm-starting"; that is, the constraints from the previous
+    frame are not used in the current frame speed up iterative
+    processes of determining impulses
+- Seperating-axis theorem use for the collision routines involing convex polygons
+
+* Dependencies
+Building this project will require the rust compiler be installed in
+the environment. The version used to build is specicially rust version
+1.65, although previous version may work.
+
+The graphics used in this demo are handled by SDL2, which is also required to be
+installed to run this project.
+
+* How to run
+Navigate to the directory containing this README in a terminal and
+type "cargo run" and the physics_tester and its dependencies
+will build and then run a non-interactable physics scene.

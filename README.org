@@ -21,6 +21,13 @@ If two objects are penetrating, an extra corrective impulse is applied
 to them which is proportional to their depth. This is done to try and
 seperate them.
 
+In the physics system, one collision culling step is also taken before
+directly comparing if two shapes are colliding: an
+Axis-Aligned-Bounding-Box (AABB) is maintained for each collision
+fixture. If two fixtures AABB's are found to not overlap, the two
+shapes are "culled" from the pool of possible colliding shapes in
+order to avoid further uncessesary collision testing.
+
 The implementation and structure of a few key features are based off
 of Erin Catto's [[https://box2d.org/][Box2D]]--namely:
 

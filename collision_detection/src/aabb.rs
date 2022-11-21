@@ -3,6 +3,9 @@ use crate::CollisionShape;
 use super::shapes::Shape;
 use math_util::Vector2f;
 
+/// This is to be used in the collision culling routine [overlapping(..)], in order to try
+/// and disqualify two shapes from intersecting before doing a more
+/// expensive collision detection routine
 #[derive(Clone, Debug)]
 pub struct AABB {
     pub x: f32,
@@ -20,7 +23,7 @@ impl AABB {
 	    height,
 	}
     }
-    
+
     pub fn overlapping(&self, other: &AABB) -> bool {
 	let overlap_on_x  = f32::abs(self.x - other.x) * 2.0 <= (self.width + other.width);
         let overlap_on_y = f32::abs(self.y - other.y) * 2.0 <= (self.height + other.height);

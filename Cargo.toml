@@ -1,7 +1,7 @@
 [workspace]
 members = [
 "physics",
-"physics_tester",
+"physics_demo",
 "collision_detection",
 "render_utils",
 "math_util",

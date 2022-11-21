@@ -14,7 +14,7 @@ contact are comprised of a collision normal and collision points.
 The physics system turns these contacts into contact constraints,
 which are then used in the collision response system. The collision
 response system iteratively applies impulses to the rigid bodies
-involved in a constraint in order to try and have all the constriants
+involved in a constraint in order to try and have all the constraints
 become met by the end of the simulation timestep.
 
 If two objects are penetrating, an extra corrective impulse is applied
@@ -33,6 +33,19 @@ that are found in Box2D. For instance, there is currently no
 "warm-starting"; that is, the constraints from the previous frame are
 not used in the current frame speed up iterative processes of
 determining impulses, as they are in Box2D
+* Project structure
+- collision_detection/
+  - Contains the collision detection library
+- physics/
+  - Contains the physics/collision response library
+- *physics_demo/*
+  - Contains the executable that sets up a basic physics scene to show
+    the collision detection and physics systems in action
+- math_util/
+  - Contains some basic math functions used by the rest of the libraries
+- render_utils/
+  - Contains some basic sdl2 calls to render collision objects for the
+    physics_demo executable
 
 * Dependencies
 Building this project will require the rust compiler be installed in

@@ -113,13 +113,10 @@ impl Shape for LineSegment {
     }
 
     fn test_against_poly(&self, p: &ConvexPoly) -> Option<Contact> {
-	//--------------------------------------------------
 	// First get penetration using line segment's axis
-	//..................................................
 	let line_pen_info = calc_min_penetration_axis(&self.edges(), self, p);
-	//--------------------------------------------------
+	
 	// Then get min penetration using poly's axis
-	//..................................................
 	let poly_axis_info = p.calc_min_penetration_axis_wrt_line(self, line_pen_info.depth);
 
 	// If either projection isn't penetrating, then the objects
@@ -146,28 +143,24 @@ impl Shape for LineSegment {
 	    incident_face = &line_pen_info.edge; // Otherwise I'm assuming the incident face is this one
 	    sign = 1.0;
 	}
-
 	
-	//------------------------------------------
-	// Clip the incident
-	// face against the sides of the Reference face
+	// Clip the incident face against the sides of the Reference
+	// face.
 	//
-	// If we've clipped away the incident face, then we aren't intersecting
-	// (note the ? operator)
-	//..........................................
+	// If we've clipped away the incident face, then we aren't
+	// intersecting (note the ? operator)
 	let clipped_incident_face = incident_face.clip(
 	    &reference_face.point1,
 	    &perp_counter_clockwise(&reference_face.normal))
 	    .and_then(|r| r.clip(&r.point2,
 		  &perp_clockwise(&r.normal)))?;
 
-	//------------------------------------------
+
 	// Either of the vertices that are part of the clipped
 	// incident face that are behind the Reference face are
 	// contact points
-	//..........................................
-
-	// is the first point in the clipped incident face behind the reference face?
+	//
+	// Now check, is the first point in the clipped incident face behind the reference face?
 	let v1_depth = -(clipped_incident_face.point1 - reference_face.point1).dot(&reference_face.normal);
 	let v2_depth = -(clipped_incident_face.point2 - reference_face.point1).dot(&reference_face.normal);
 

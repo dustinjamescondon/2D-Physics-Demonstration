@@ -107,26 +107,25 @@ impl ConvexPoly {
 	    // not overlap in the line's axis direction
 	    //..................................................
 	    let cos_theta = (-edge.normal).dot(&line.normal);
-	    let mut option1: Option<f32> = None;
+	    let mut option1 = f32::MAX;
 
 	    // If the normal's are opposing, then do actually consider
 	    // this overlapping distance Otherwise, just leave option1
 	    // as None
 	    if cos_theta > 0.0 {
-		option1 = Some(line_axis_overlap / cos_theta);
+		option1 = line_axis_overlap / cos_theta;
 	    }
 	    
-	    //--------------------------------------------------
-	    // Second, see how far we have to move the object in the
-	    // backwards normal direction to make it not overlap in
-	    // this axis' direction
-	    //..................................................
+
+	    // Second, see how far what the penetration of the polygon
+	    // and line is wrt this edge
 	    let option2 = (self.project(&edge.normal) + line.project(&-edge.normal)) -
 		position_difference_dot_edge_normal;
-	    
-	    if option1.is_some() && option1.unwrap() < option2 {
-		if min_penetration.is_none() || option1.unwrap() < min_penetration.unwrap() {
-		    min_penetration = option1;
+
+	    // Return the axis with the smallest penetration
+	    if option1 < option2 {
+		if min_penetration.is_none() || option1 < min_penetration.unwrap() {
+		    min_penetration = Some(option1);
 		    min_edge = Some(edge.clone());
 		}
 	    } else if min_penetration.is_none() || option2 < min_penetration.unwrap() {

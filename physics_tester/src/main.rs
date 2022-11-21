@@ -62,15 +62,15 @@ fn main() {
 	create_box((WINDOW_W / 2) as f32 + 100.0, (WINDOW_H / 2) as f32 - 100.0),
 	create_box((WINDOW_W / 2) as f32 + 100.0, (WINDOW_H / 2) as f32 - 200.0),
 	create_box((WINDOW_W / 2) as f32 + 100.0, (WINDOW_H / 2) as f32 - 300.0),
-	create_ball(150.0, 70.0),
+	create_ball(150.0, 80.0),
 	//--------------------------------------------------
 	// Create static walls/ramps
 	//..................................................
 	create_ramp(100.0, 100.0, 500.0, 500.0),
-	create_wall(Direction::UP, 50.0, WINDOW_W as f32, WINDOW_H as f32),
-	create_wall(Direction::DOWN, 50.0, WINDOW_W as f32, WINDOW_H as f32),
-	create_wall(Direction::LEFT, 50.0, WINDOW_W as f32, WINDOW_H as f32),
-	create_wall(Direction::RIGHT, 50.0, WINDOW_W as f32, WINDOW_H as f32)];
+	create_wall(Direction::Up, 50.0, WINDOW_W as f32, WINDOW_H as f32),
+	create_wall(Direction::Down, 50.0, WINDOW_W as f32, WINDOW_H as f32),
+	create_wall(Direction::Left, 50.0, WINDOW_W as f32, WINDOW_H as f32),
+	create_wall(Direction::Right, 50.0, WINDOW_W as f32, WINDOW_H as f32)];
     
     let window = video_subsystem.window("Physics system demo", WINDOW_W, WINDOW_H)
         .position_centered()
@@ -93,12 +93,6 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
                 },
-                Event::MouseMotion { timestamp, window_id, which, mousestate, x, y, xrel, yrel } => {
-                },
-                Event::MouseButtonDown { timestamp, window_id, which, mouse_btn, clicks, x, y } => {
-                },
-		Event::MouseButtonUp { timestamp, window_id, which, mouse_btn, clicks, x, y } => {
-		},
                 _ => {}
             }
         }
@@ -163,7 +157,7 @@ fn create_ramp(x0: f32, y0: f32, x1: f32, y1: f32) -> RigidBody {
 }
 
 // Helper function for creating walls
-enum Direction { UP, DOWN, LEFT, RIGHT }
+enum Direction { Up, Down, Left, Right }
 fn create_wall(dir: Direction, thickness: f32, room_w: f32, room_h: f32) -> RigidBody {
     let mut rb = RigidBody::new();
     rb.inv_mass = 0.0;
@@ -175,25 +169,25 @@ fn create_wall(dir: Direction, thickness: f32, room_w: f32, room_h: f32) -> Rigi
     let half_room_w = room_w / 2.0;
 
     match dir {
-	Direction::UP => {
+	Direction::Up => {
 	    rb.pos = Vector2f::new(half_room_w, thickness / 2.0);
 	    rb.add_fixture(
 		ConvexPoly::new_box(room_w, thickness).to_shape()
 	    );
 	},
-	Direction::DOWN => {
+	Direction::Down => {
 	    rb.pos = Vector2f::new(half_room_w, room_h - (thickness / 2.0));
 	    rb.add_fixture(
 		ConvexPoly::new_box(room_w, thickness).to_shape()
 	    );
 	},
-	Direction::LEFT => {
+	Direction::Left => {
 	    rb.pos = Vector2f::new(thickness / 2.0, half_room_h);
 	    rb.add_fixture(
 		ConvexPoly::new_box(thickness, room_h - (2.0 * thickness) - 1.0).to_shape()
 	    );
 	},
-	Direction::RIGHT => {
+	Direction::Right => {
 	    rb.pos = Vector2f::new(room_w - (thickness / 2.0), half_room_h);
 	    rb.add_fixture(
 		ConvexPoly::new_box(thickness, room_h - (2.0 * thickness) - 1.0).to_shape()

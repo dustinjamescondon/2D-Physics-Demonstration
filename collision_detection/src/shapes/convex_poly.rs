@@ -4,7 +4,10 @@ pub use crate::info::*;
 #[derive(Clone, Debug)]
 pub struct ConvexPoly{
     pub pos : Vector2f,
-    pub vertices : Vec<Vector2f>,
+    
+    // Note: these are the local vertices, which are independent of pos
+    // in order to get the global vertices, call ConvexPoly::global_vertices()
+    vertices : Vec<Vector2f>, 
     pub edges: Vec<Edge>,
 }
 

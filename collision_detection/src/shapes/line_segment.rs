@@ -3,8 +3,8 @@ use super::*;
 
 #[derive(Clone, Debug)]
 pub struct LineSegment {
-    pub vertex1 : Vector2f,
-    pub vertex2 : Vector2f,
+    pub point1 : Vector2f,
+    pub point2 : Vector2f,
     pub normal : Vector2f,
     pub direction : Vector2f,
     pub length : f32,
@@ -12,7 +12,7 @@ pub struct LineSegment {
 
 impl std::fmt::Display for LineSegment {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-	write!(f, "vertex1: {}vertex2: {}", self.vertex1, self.vertex2)
+	write!(f, "vertex1: {}vertex2: {}", self.point1, self.point2)
     }
 }
 
@@ -29,8 +29,8 @@ impl LineSegment {
     pub fn new(point1: Vector2f, point2: Vector2f) -> LineSegment {
 	let direction = (point2 - point1).normalize();
 	LineSegment {
-	    vertex1: point1,
-	    vertex2: point2,
+	    point1,
+	    point2,
 	    direction,
 	    normal: perp_counter_clockwise(&direction),
 	    length: (point2 - point1).norm(),
@@ -38,19 +38,11 @@ impl LineSegment {
     }
    
     pub fn midpoint(&self) -> Vector2f {
-	(self.point1() + self.point2()) / 2.0
+	(self.point1 + self.point2) / 2.0
     }
 
     pub fn as_edge(&self) -> Edge {
-	Edge::new(self.point1(), self.point2())
-    }
-
-    pub fn point1(&self) -> Vector2f {
-	self.vertex1
-    }
-
-    pub fn point2(&self) -> Vector2f {
-	self.vertex2
+	Edge::new(self.point1, self.point2)
     }
 
     pub fn to_shape(self) -> CollisionShape {
@@ -64,13 +56,13 @@ impl Shape for LineSegment {
     }
 
     fn project(&self, dir: &Vector2f) -> f32 {
-	maximum((self.vertex1 - self.pos()).dot(dir), (self.vertex2 - self.pos()).dot(dir))
+	maximum((self.point1 - self.pos()).dot(dir), (self.point2 - self.pos()).dot(dir))
     }
     
     fn transform(&self, transformation: &Matrix3f) -> LineSegment {
 	LineSegment {
-	    vertex1: transform_vector(transformation, &self.vertex1),
-	    vertex2: transform_vector(transformation, &self.vertex2),
+	    point1: transform_vector(transformation, &self.point1),
+	    point2: transform_vector(transformation, &self.point2),
 	    direction: transform_vector_rotation_only(transformation, &self.direction),
 	    normal: perp_counter_clockwise(&self.direction),
 	    length: self.length,

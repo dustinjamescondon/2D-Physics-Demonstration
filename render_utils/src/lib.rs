@@ -41,8 +41,8 @@ pub fn render_shape(canvas: &mut Canvas<Window>, shape: &CollisionShape, trans: 
 	CollisionShape::LineSegment(l_) => {
 	    let l = l_.transform(trans);
 	    canvas.set_draw_color(Color::BLUE);
-	    let point1 = l.point1();
-	    let point2 = l.point2();
+	    let point1 = l.point1;
+	    let point2 = l.point2;
 	    canvas.draw_line(
 		(point1.x as i32, point1.y as i32),
 		(point2.x as i32, point2.y as i32)).expect("Couldn't draw line!");

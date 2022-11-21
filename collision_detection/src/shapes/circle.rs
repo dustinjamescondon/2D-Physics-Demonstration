@@ -84,8 +84,8 @@ impl Shape for Circle {
 	// Note: Want normal always facing towards the self
 	
 	// Use this to define a strip orthog to the line connecting the two points
-	let line_point1 = line.point1();
-	let line_point2 = line.point2();
+	let line_point1 = line.point1;
+	let line_point2 = line.point2;
 	let dir_p1_to_p2 = (line_point2 - line_point1).normalize();
 	let line_normal = perp_counter_clockwise(&dir_p1_to_p2);
 	let delta_c_to_point1 = line_point1 - self.pos;

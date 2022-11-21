@@ -3,6 +3,14 @@
 #+DATE: 20 Nov 2022
 
 * Introduction
+This is a simple non-interactable demo of a 2D collision detection and
+constraint-based collision response system.
+
+The collision detection system operates on three shape primitives: a
+convex polyon, circle, and line segment. 
+
+
+
 - Some structure based on Erin Catto's [[https://box2d.org/][Box2D]]
   - How friction is calculated
   - The structure and language of a collision "fixture"

@@ -78,7 +78,7 @@ fn convex_poly_transform_test() {
     poly.pos = Vector2f::new(1.0, 1.0);
     let transformed_poly = poly.transform(&Matrix3f::identity());
 
-    assert!(transformed_poly.vertices == poly.vertices);
+    assert!(transformed_poly.global_vertices() == poly.global_vertices());
     assert!(transformed_poly.pos == poly.pos);
 }
 

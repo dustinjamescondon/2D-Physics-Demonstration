@@ -16,6 +16,13 @@ impl std::fmt::Display for LineSegment {
     }
 }
 
+impl Edged for LineSegment {
+    fn edges(&self) -> Vec<Edge>
+    {
+	vec![self.as_edge()]
+    }
+}
+
 impl Volume for LineSegment {}
 
 impl LineSegment {
@@ -49,28 +56,6 @@ impl LineSegment {
     pub fn to_shape(self) -> CollisionShape {
 	CollisionShape::LineSegment(self)
     }
-
-    /// 
-    pub fn calc_min_depth(&self, p: &ConvexPoly) -> (f32, Edge) {
-	// The only potential seperating axis has the projection
-	// direction of the line normal
-	let position_difference = p.pos() - self.pos();
-
-	let position_difference_dot_edge_normal = position_difference.dot(&self.normal);
-	
-	// NOTE: this doesn't project the line segment because its projection will be zero
-	// in the normal direction
-	let depth_option1:f32 = p.project(&-self.normal) - position_difference_dot_edge_normal;
-	let depth_option2:f32 = p.project(&self.normal) + position_difference_dot_edge_normal;
-
-	
-	if depth_option1 < depth_option2 {
-	    (depth_option1, self.as_edge())
-	}
-	else {
-	    (depth_option2, self.as_edge())
-	}
-    }
 }
 
 impl Shape for LineSegment {
@@ -103,6 +88,7 @@ impl Shape for LineSegment {
     fn test_against_line(&self, _line: &LineSegment) -> Option<Contact> {
 	panic!("Line test against line not implemented yet!");
 
+	// WIP
 	/*let clipped_line = line.as_edge().clip(&self.point1(), &-self.direction)
 	    .and_then(|edge| edge.clip(&self.point2(), &self.direction))?;
 
@@ -126,22 +112,19 @@ impl Shape for LineSegment {
 	}*/
     }
 
-    // Normal points towards self object
     fn test_against_poly(&self, p: &ConvexPoly) -> Option<Contact> {
-
 	//--------------------------------------------------
 	// First get penetration using line segment's axis
 	//..................................................
-	let (line_pen_depth, line_pen_edge) = self.calc_min_depth(p);
+	let line_pen_info = calc_min_penetration_axis(&self.edges(), self, p);
 	//--------------------------------------------------
 	// Then get min penetration using poly's axis
 	//..................................................
-	let poly_axis_info = p.calc_min_depth_line(self, line_pen_depth);
-
+	let poly_axis_info = p.calc_min_penetration_axis_wrt_line(self, line_pen_info.depth);
 
 	// If either projection isn't penetrating, then the objects
 	// aren't penetrating, by the seperating axis theorem.
-	if line_pen_depth < 0.0 || poly_axis_info.depth < 0.0 {
+	if line_pen_info.depth < 0.0 || poly_axis_info.depth < 0.0 {
 	    return None;
 	}
 
@@ -153,36 +136,36 @@ impl Shape for LineSegment {
 	// If the line has less penetration, then make it the reference face, and
 	// since it's the "self" object, and the line normal is away from self, then
 	// flip the sign of the normal
-	if line_pen_depth < poly_axis_info.depth {
-	    reference_face = &line_pen_edge;
+	if line_pen_info.depth < poly_axis_info.depth {
+	    reference_face = &line_pen_info.edge;
 	    incident_face = &poly_axis_info.edge; // I'm assuming the incident face is this one
 	    sign = -1.0;
 	}
 	else {
 	    reference_face = &poly_axis_info.edge;
-	    incident_face = &line_pen_edge; // Otherwise I'm assuming the incident face is this one
+	    incident_face = &line_pen_info.edge; // Otherwise I'm assuming the incident face is this one
 	    sign = 1.0;
 	}
 
 	
-	/*------------------------------------------
-	 * Clip the incident
-	 * face against the sides of the Reference face
-	 *
-	 * If we've clipped away the incident face, then we aren't intersecting
-	 * (note the ? operator)
-	 *..........................................*/
+	//------------------------------------------
+	// Clip the incident
+	// face against the sides of the Reference face
+	//
+	// If we've clipped away the incident face, then we aren't intersecting
+	// (note the ? operator)
+	//..........................................
 	let clipped_incident_face = incident_face.clip(
 	    &reference_face.point1,
 	    &perp_counter_clockwise(&reference_face.normal))
 	    .and_then(|r| r.clip(&r.point2,
 		  &perp_clockwise(&r.normal)))?;
 
-	/*------------------------------------------*/
-	/* Either of the vertices that are part of the clipped
-	 * incident face that are behind the Reference face are
-	 * contact points
-	 *..........................................*/
+	//------------------------------------------
+	// Either of the vertices that are part of the clipped
+	// incident face that are behind the Reference face are
+	// contact points
+	//..........................................
 
 	// is the first point in the clipped incident face behind the reference face?
 	let v1_depth = -(clipped_incident_face.point1 - reference_face.point1).dot(&reference_face.normal);

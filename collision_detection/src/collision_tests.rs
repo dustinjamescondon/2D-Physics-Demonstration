@@ -48,7 +48,7 @@ fn calc_min_depth_test1() {
     poly2.set_vertices(&vec![Vector2f::new(-1.0, -1.0), Vector2f::new(1.0, -1.0),
 			     Vector2f::new(1.0, 1.0), Vector2f::new(-1.0, 1.0)]);
 
-    let result = poly1.calc_min_depth_wrt_own_axes(&poly2);
+    let result = calc_min_penetration_axis(&poly1.edges(), &poly1, &poly2);
     let pen_info = result;
     assert!((pen_info.depth - 1.0).abs() < 0.001f32);
     assert!(pen_info.edge.normal == Vector2f::new(1.0, 0.0));
@@ -67,7 +67,7 @@ fn calc_min_depth_test2() {
     poly2.set_vertices(&vec![Vector2f::new(-1.0, -1.0), Vector2f::new(1.0, -1.0),
 			     Vector2f::new(1.0, 1.0), Vector2f::new(-1.0, 1.0)]);
 
-    let pen_info = poly1.calc_min_depth_wrt_own_axes(&poly2);
+    let pen_info = calc_min_penetration_axis(&poly1.edges(), &poly1, &poly2);
     assert!(pen_info.depth < 0.0);
     assert!(pen_info.edge.normal == Vector2f::new(1.0, 0.0));
 }

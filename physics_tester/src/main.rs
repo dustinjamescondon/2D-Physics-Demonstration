@@ -21,7 +21,7 @@ const WINDOW_H: u32 = 800;
 
 fn render_bodies(bodies: &Vec<RigidBody>, canvas: &mut Canvas<Window>) {
     for body in bodies {
-	canvas.circle(body.pos.x as i16, body.pos.y as i16, 10.0 as i16, Color::RED).expect("Yell");
+	canvas.circle(body.pos.x as i16, body.pos.y as i16, 5.0 as i16, Color::RED).expect("Couldn't draw!");
 	for fixture in &body.hull.global_fixtures {
 	    //render_aabb(canvas, &fixture.aabb);
 	    render_shape(canvas, &fixture.shape, &Matrix3f::identity());

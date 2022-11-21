@@ -27,6 +27,14 @@ impl Default for ConvexPoly {
     }
 }
 
+impl Edged for ConvexPoly {
+    fn edges(&self) -> Vec<Edge> {
+	self.edges.iter().map(|e| {
+	    Edge::new(self.pos + e.point1, self.pos + e.point2)
+	}).collect()
+    }
+}
+
 impl ConvexPoly {
     pub fn set_vertices(&mut self, vertices: &Vec<Vector2f>) -> &mut Self {
 	self.vertices = vertices.clone();
@@ -53,12 +61,6 @@ impl ConvexPoly {
 	CollisionShape::ConvexPoly(self)
     }
 
-    pub fn global_edges(&self) -> Vec<Edge> {
-	self.edges.iter().map(|e| {
-	    Edge::new(self.pos + e.point1, self.pos + e.point2)
-	}).collect()
-    }
-
     pub fn global_vertices(&self) -> Vec<Vector2f> {
 	self.vertices.iter().map(|v| {
 	    self.pos + v
@@ -77,7 +79,7 @@ impl ConvexPoly {
     pub fn find_incident_face(&self, reference_face: &Edge) -> Edge {
 	let mut max_opposition: f32 = 0.0;
 	let mut incident_face: Option<Edge> = None;
-	for edge in self.global_edges() {
+	for edge in self.edges() {
 	    let proj = reference_face.normal.dot(&edge.normal);
 	    if -proj > max_opposition {
 		max_opposition = -proj;
@@ -88,65 +90,36 @@ impl ConvexPoly {
 	incident_face.unwrap()
     }
 
-    /// Calculates the minimum penetration depth between the two polygons using the edges from
-    /// this/self polygon as the seperating axes
-    pub fn calc_min_depth_wrt_own_axes(&self, b: &impl Shape) -> PenetrationInfo {
-	//------------------------------------------
-	// First find the axis of minimum penetration
-	//..........................................
-	let position_difference = b.pos() - self.pos;
-
-	let mut min_penetration: Option<f32> = None;
-	let mut min_edge: Option<Edge> = None;
-	
-	for edge in self.global_edges() {
-	    let position_difference_dot_edge_normal = position_difference.dot(&edge.normal);
-	    
-	    // Don't use this edge as a seperating one, because it's facing away from the other object
-	    if position_difference_dot_edge_normal < 0.0 { continue; }
-
-	    let depth = (self.project(&edge.normal) + b.project(&-edge.normal)) -
-		position_difference_dot_edge_normal;
-
-	    // NOTE: Relying on early exit of condition here
-	    if min_penetration.is_none() || depth < min_penetration.unwrap() {
-		min_penetration = Some(depth);
-		min_edge = Some(edge);
-	    }
-	}
-
-	assert!(min_edge.is_some());
-	PenetrationInfo::new(min_penetration.unwrap(), &min_edge.unwrap())
-    }
-
-
     // TODO clean this up
     /// Returns the minimum projection penetration between all edges
     /// in this convex polygon and the edge containing the axis it was
     /// determined with.
-    pub fn calc_min_depth_line(&self, line: &LineSegment, line_axis_overlap: f32) -> PenetrationInfo {
+    pub fn calc_min_penetration_axis_wrt_line(&self, line: &LineSegment, line_axis_overlap: f32) -> PenetrationInfo {
 	let position_difference = line.pos() - self.pos();
 	let mut min_penetration: Option<f32> = None;
 	let mut min_edge: Option<Edge> = None;
 	
-	for edge in self.global_edges() {
+	for edge in self.edges() {
 	    let position_difference_dot_edge_normal = position_difference.dot(&edge.normal);
 	    //--------------------------------------------------
-	    // First, see how far we have to move the this object in the backwards normal direction
-	    // of this edge to make it not overlap in the line's axis direction
+	    // First, see how far we have to move the this object in
+	    // the backwards normal direction of this edge to make it
+	    // not overlap in the line's axis direction
 	    //..................................................
 	    let cos_theta = (-edge.normal).dot(&line.normal);
 	    let mut option1: Option<f32> = None;
 
-	    // If the normal's are opposing, then do actually consider this overlapping distance
-	    // Otherwise, just leave option1 as None
+	    // If the normal's are opposing, then do actually consider
+	    // this overlapping distance Otherwise, just leave option1
+	    // as None
 	    if cos_theta > 0.0 {
 		option1 = Some(line_axis_overlap / cos_theta);
 	    }
 	    
 	    //--------------------------------------------------
-	    // Second, see how far we have to move the object in the backwards normal direction
-	    // to make it not overlap in this axis' direction
+	    // Second, see how far we have to move the object in the
+	    // backwards normal direction to make it not overlap in
+	    // this axis' direction
 	    //..................................................
 	    let option2 = (self.project(&edge.normal) + line.project(&-edge.normal)) -
 		position_difference_dot_edge_normal;
@@ -217,33 +190,30 @@ impl Shape for ConvexPoly {
     }
 
     fn test_against_poly(&self, p: &ConvexPoly) -> Option<Contact> {
-	/*..................................................
-	 * Self first
-	..................................................*/
-	let a_pen_info = self.calc_min_depth_wrt_own_axes(p);
-	/*..................................................
-	 * Other poly next
-	..................................................*/
-	let b_pen_info = p.calc_min_depth_wrt_own_axes(self);
-	/*..................................................
-	 * Now see which result contains the reference face (axis of min penetration depth)
-	..................................................*/
 
+	// Find which axis from object a (self) has minimum penetration
+	let a_pen_info = calc_min_penetration_axis(&self.edges(), self, p);
 
-	// If either 
+	// Find which axis from object b has minimum penetration
+	let b_pen_info = calc_min_penetration_axis(&p.edges(), p, self);
+	
+	// Now see which result contains the reference face (axis of min penetration depth)
+
+	// If either isn't penetrationg, then by the seperating-axis theorem,
+	// they aren' colliding/overlapping
 	if a_pen_info.depth < 0.0 || b_pen_info.depth < 0.0 {
 	    return None;
 	}
 
-	/* ObjectA is the object containing the axis of minimum
-	penetration, and therefore the "reference face" ObjectB
-	contains the "incident face" */
 	let reference_face: Edge;
 	let incident_face: Edge;
 
 	let sign: f32;
 
 	if a_pen_info.depth < b_pen_info.depth {
+	    // shape a (self) is the object containing the axis of
+	    // minimum penetration, and therefore the "reference
+	    // face", and shape b contains the "incident face"
 	    reference_face = a_pen_info.edge;
 	    incident_face = p.find_incident_face(&reference_face);
 	    sign = 1.0;
@@ -256,21 +226,19 @@ impl Shape for ConvexPoly {
 	    sign = -1.0;
 	}
 
-	/*------------------------------------------
-	 * Clip the incident face against the sides of the Reference face
-	 *..........................................*/
+	// Clip the incident face against the sides of the Reference face
 	let clipped_incident_face_result = incident_face.clip(
 	    &reference_face.point1, &perp_counter_clockwise(&reference_face.normal)).and_then(|r|
 	    r.clip(&reference_face.point2, &perp_clockwise(&reference_face.normal)));
 	// If we've clipped away the incident face, then we aren't intersecting
 	let clipped_incident_face = clipped_incident_face_result?;
 
-	/*------------------------------------------
-	 * Either of the vertices that are part of the clipped incident face that are behind
-	 * the Reference face are contact points
-	 *..........................................*/
+	// Either of the vertices that are part of the clipped
+	// incident face that are behind the Reference face are
+	// contact points
 
-	// Having a positive depth means the clipped point is behind the reference face, meaning penetration
+	// Having a positive depth means the clipped point is behind
+	// the reference face, meaning penetration
 	let v1_depth = -(clipped_incident_face.point1 - reference_face.point1).dot(&reference_face.normal);
 	let v2_depth = -(clipped_incident_face.point2 - reference_face.point1).dot(&reference_face.normal);
 
@@ -279,7 +247,8 @@ impl Shape for ConvexPoly {
 	    .. Default::default()
 	};
         
-	// if first clipped point is behind the reference face, then it's penetrating
+	// if first clipped point is behind the reference face, then
+	// it's penetrating
 	if v1_depth >= 0.0 {
 	    result.points.push(
 		ContactPoint{
@@ -288,7 +257,8 @@ impl Shape for ConvexPoly {
 		});
 	}
 	
-	// if second clipped point is behind the reference face, then it's penetrating
+	// if second clipped point is behind the reference face, then
+	// it's penetrating
 	if v2_depth >= 0.0 {
 	    result.points.push(
 		ContactPoint{
